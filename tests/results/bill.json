@@ -1,0 +1,16 @@
+{
+  "fileName": "bill.webp",
+  "provider": "TESSERACT",
+  "ocrConfidence": 81,
+  "ocrProcessingTimeMs": 551,
+  "totalProcessingTimeMs": 551,
+  "aiMethod": "rule-based",
+  "rawText": "Touch & Touch\nINVOICE NO: 1234\n17th May, 2023 Invoice to:\nSteve Smith\nhelo@reollygreotsite.com\n123 Anywhere St, Any City, Sĩ 12345\nDescription Qty Cost Subtotal\nInitial Consultation 5 $300.00 $15.000\nProject Draft 2 $500.00 $1.000\nImplementation 1 $12.000 $12.000\nFoundation Labor 30 $60.00 $1.800\nPAYMENT DETAILS: Subtotal $20.800\nBank Code: Tax $250.00\n123-456-7890\nFaget sank\nFauget Bank\nCONTACT US Thank You!\nLm\n© 123 Anywhere st any city 5712345 Administrator\n& hope al\n",
+  "cleanedText": "Touch & Touch\nINVOICE NO: 1234\n17th May, 2023 Invoice to:\nSteve Smith\nhelo@reollygreotsite.com\n123 Anywhere St, Any City, Sĩ 12345\nDescription Qty Cost Subtotal\nInitial Consultation 5 $300.00 $15.000\nProject Draft 2 $500.00 $1.000\nImplementation 1 $12.000 $12.000\nFoundation Labor 30 $60.00 $1.800\nPAYMENT DETAILS: Subtotal $20.800\nBank Code: Tax $250.00\n123-456-7890\nFaget sank\nFauget Bank\nCONTACT US Thank You!\nLm\n© 123 Anywhere st any city 5712345 Administrator\n& hope al",
+  "extractedData": {
+    "123": "456-7890",
+    "invoice_no": "1234",
+    "payment_details": "Subtotal $20.800",
+    "bank_code": "Tax $250.00"
+  }
+}

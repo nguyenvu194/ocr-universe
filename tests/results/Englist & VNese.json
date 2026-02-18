@@ -1,0 +1,14 @@
+{
+  "fileName": "Englist & VNese.jpg",
+  "provider": "TESSERACT",
+  "ocrConfidence": 92,
+  "ocrProcessingTimeMs": 1784,
+  "totalProcessingTimeMs": 1785,
+  "aiMethod": "rule-based",
+  "rawText": "RA\nBài Văn = a\nEnglish:\n\nMy family is the most important thing in my life. | have a small but very close-knit family.\nThere are five members in my family: my parents, my younger brother, my younger sister,\nand me. My father is a doctor, and my mother is a teacher. They both work hard to provide\nfor our family and always make sure we have everything we need. Although my parents are\nvery busy with work, they always make time for us. My younger brother and sister are both\nstudents, and we help each other with homework. We also spend time together on\nweekends, whether it's watching movies, playing games, or going out for dinner. | am\ngrateful for my family because they are always there to support and love me\nDich:\n\nGia đình tôi là điều quan trọng nhét trong cuộc sống của tôi. Tôi có một gia đình nhỏ nhưng\nrat gắn bó. Gia đình tôi có năm thành viên: bồ mẹ tôi, em trai, em gái và tôi. Bồ tôi là bác sĩ,\ncòn mẹ tôi là giáo viên. Cả hai đều làm việc chăm chi dé nuôi sống gia đình và luôn đảm\nbảo chúng tôi có tất cả những gì cần thiết. Mặc dù bố me rất bận với công việc, họ luôn\ndành thời nian cho chín ki Em trai và am adi tôi đầu: là hoe cinh. và ching Ai năm AN\n",
+  "cleanedText": "RA\nBài Văn = a\nEnglish:\n\nMy family is the most important thing in my life. | have a small but very close-knit family.\nThere are five members in my family: my parents, my younger brother, my younger sister,\nand me. My father is a doctor, and my mother is a teacher. They both work hard to provide\nfor our family and always make sure we have everything we need. Although my parents are\nvery busy with work, they always make time for us. My younger brother and sister are both\nstudents, and we help each other with homework. We also spend time together on\nweekends, whether it's watching movies, playing games, or going out for dinner. | am\ngrateful for my family because they are always there to support and love me\nDich:\n\nGia đình tôi là điều quan trọng nhét trong cuộc sống của tôi. Tôi có một gia đình nhỏ nhưng\nrat gắn bó. Gia đình tôi có năm thành viên: bồ mẹ tôi, em trai, em gái và tôi. Bồ tôi là bác sĩ,\ncòn mẹ tôi là giáo viên. Cả hai đều làm việc chăm chi dé nuôi sống gia đình và luôn đảm\nbảo chúng tôi có tất cả những gì cần thiết. Mặc dù bố me rất bận với công việc, họ luôn\ndành thời nian cho chín ki Em trai và am adi tôi đầu: là hoe cinh. và ching Ai năm AN",
+  "extractedData": {
+    "there_are_five_members_in_my_family": "my parents, my younger brother, my younger sister,",
+    "rat_gắn_bó._gia_đình_tôi_có_năm_thành_viên": "bồ mẹ tôi, em trai, em gái và tôi. Bồ tôi là bác sĩ,"
+  }
+}

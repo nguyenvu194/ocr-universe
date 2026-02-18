@@ -1,0 +1,32 @@
+{
+  "fileName": "text.png",
+  "provider": "TESSERACT",
+  "ocrConfidence": 93,
+  "ocrProcessingTimeMs": 1095,
+  "totalProcessingTimeMs": 1095,
+  "aiMethod": "rule-based",
+  "rawText": "CHUNG TA CÓ THE ĐỌC NHANH HON?!\nA-dam Khu (Adam Khoo)\n\nA-dam Khu lò một doanh nhân thành dat ở Xin-ga-po (Singapore).\n\nCuốn sóch Tôi tai giỏi, bạn cũng thé! của ông chia sẻ những phương.\nphóp, kĩ năng mò tóc gid da óp dụng trong nhiều năm để có được những.\nthanh công trong học vốn va cuộc sống. Sách gồm bốn phần, 18 chương.\n\nVăn ban dưới đây trích từ chương 6. Phương pháp đọc để nắm bắt thong\ntin, thuộc Phồn II. Những phương pháp học siêu đẳng.\n\nHoc xong cấp Tiểu học, em đã biết cách đọc văn bán nhưng có thể tốc độ đọc con\nchậm, nắm bắt thông tin chưa hiệu gud. Dé thực hiện hoạt động này tốt hơn, em hãy làm\ntheo lời khuyên và hướng dẫn dưới đây của tác giả A-dam Khu.\n\n1. Sir dụng một cây bút chì làm vật dẫn đường\n\nKhi không có vật gì đi trước dẫn dường, mắt bạn có khuynh hướng nháy nhot khắp\ntrang giầy làm chậm việc đọc sách của bạn. Do đó, bắt kì khi nào bạn đọc sách, hãy dùng.\nmột cây bút chi làm vật dẫn mắt bạn qua từng câu văn,\n\nCách này giúp ban tập trung hơn vào việc doc. Một lí do khác của việc dùng bút chi\nlà dé điều khiển tốc độ đọc của mắt bạn. Điều này tương tự như việc bạn cần một người.\nkhác chỉ đạo tốc độ trong môn đua thuyền vậy. Dịch chuyển bút chì nhanh hơn tốc độ đọc\nbinh thường của bạn một chút giúp rèn luyện mắt ban đuổi theo bit vả quen dẫn với tốc\nđộ đọc nhanh hơn.\n",
+  "cleanedText": "CHUNG TA CÓ THE ĐỌC NHANH HON?!\nA-dam Khu (Adam Khoo)\n\nA-dam Khu lò một doanh nhân thành dat ở Xin-ga-po (Singapore).\n\nCuốn sóch Tôi tai giỏi, bạn cũng thé! của ông chia sẻ những phương.\nphóp, kĩ năng mò tóc gid da óp dụng trong nhiều năm để có được những.\nthanh công trong học vốn va cuộc sống. Sách gồm bốn phần, 18 chương.\n\nVăn ban dưới đây trích từ chương 6. Phương pháp đọc để nắm bắt thong\ntin, thuộc Phồn II. Những phương pháp học siêu đẳng.\n\nHoc xong cấp Tiểu học, em đã biết cách đọc văn bán nhưng có thể tốc độ đọc con\nchậm, nắm bắt thông tin chưa hiệu gud. Dé thực hiện hoạt động này tốt hơn, em hãy làm\ntheo lời khuyên và hướng dẫn dưới đây của tác giả A-dam Khu.\n\n1. Sir dụng một cây bút chì làm vật dẫn đường\n\nKhi không có vật gì đi trước dẫn dường, mắt bạn có khuynh hướng nháy nhot khắp\ntrang giầy làm chậm việc đọc sách của bạn. Do đó, bắt kì khi nào bạn đọc sách, hãy dùng.\nmột cây bút chi làm vật dẫn mắt bạn qua từng câu văn,\n\nCách này giúp ban tập trung hơn vào việc doc. Một lí do khác của việc dùng bút chi\nlà dé điều khiển tốc độ đọc của mắt bạn. Điều này tương tự như việc bạn cần một người.\nkhác chỉ đạo tốc độ trong môn đua thuyền vậy. Dịch chuyển bút chì nhanh hơn tốc độ đọc\nbinh thường của bạn một chút giúp rèn luyện mắt ban đuổi theo bit vả quen dẫn với tốc\nđộ đọc nhanh hơn.",
+  "extractedData": {
+    "line_1": "CHUNG TA CÓ THE ĐỌC NHANH HON?!",
+    "line_2": "A-dam Khu (Adam Khoo)",
+    "line_3": "A-dam Khu lò một doanh nhân thành dat ở Xin-ga-po (Singapore).",
+    "line_4": "Cuốn sóch Tôi tai giỏi, bạn cũng thé! của ông chia sẻ những phương.",
+    "line_5": "phóp, kĩ năng mò tóc gid da óp dụng trong nhiều năm để có được những.",
+    "line_6": "thanh công trong học vốn va cuộc sống. Sách gồm bốn phần, 18 chương.",
+    "line_7": "Văn ban dưới đây trích từ chương 6. Phương pháp đọc để nắm bắt thong",
+    "line_8": "tin, thuộc Phồn II. Những phương pháp học siêu đẳng.",
+    "line_9": "Hoc xong cấp Tiểu học, em đã biết cách đọc văn bán nhưng có thể tốc độ đọc con",
+    "line_10": "chậm, nắm bắt thông tin chưa hiệu gud. Dé thực hiện hoạt động này tốt hơn, em hãy làm",
+    "line_11": "theo lời khuyên và hướng dẫn dưới đây của tác giả A-dam Khu.",
+    "line_12": "1. Sir dụng một cây bút chì làm vật dẫn đường",
+    "line_13": "Khi không có vật gì đi trước dẫn dường, mắt bạn có khuynh hướng nháy nhot khắp",
+    "line_14": "trang giầy làm chậm việc đọc sách của bạn. Do đó, bắt kì khi nào bạn đọc sách, hãy dùng.",
+    "line_15": "một cây bút chi làm vật dẫn mắt bạn qua từng câu văn,",
+    "line_16": "Cách này giúp ban tập trung hơn vào việc doc. Một lí do khác của việc dùng bút chi",
+    "line_17": "là dé điều khiển tốc độ đọc của mắt bạn. Điều này tương tự như việc bạn cần một người.",
+    "line_18": "khác chỉ đạo tốc độ trong môn đua thuyền vậy. Dịch chuyển bút chì nhanh hơn tốc độ đọc",
+    "line_19": "binh thường của bạn một chút giúp rèn luyện mắt ban đuổi theo bit vả quen dẫn với tốc",
+    "line_20": "độ đọc nhanh hơn."
+  }
+}

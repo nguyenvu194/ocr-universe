@@ -1,0 +1,239 @@
+// ═══════════════════════════════════════════════════════════════
+// OCR Universe — Database Diagram (dbdiagram.io)
+// Paste this entire file at https://dbdiagram.io/
+// ═══════════════════════════════════════════════════════════════
+
+// ─── ENUMS ───────────────────────────────────────────────────
+
+Enum auth_provider_type {
+  email
+  google
+  facebook
+  github
+}
+
+Enum transaction_status {
+  pending
+  success
+  failed
+  refunded
+}
+
+Enum transaction_type {
+  deposit
+  package_purchase
+  payg_topup
+}
+
+Enum payment_method {
+  momo
+  vnpay
+  zalopay
+  bank_transfer
+  stripe
+  manual
+}
+
+Enum package_type {
+  payg
+  basic
+  premium
+}
+
+Enum ocr_feature_type {
+  ocr_basic
+  ocr_advanced
+  ai_reconstruct
+  ai_translate
+  ai_summarize
+  export_pdf
+  export_docx
+  export_xlsx
+}
+
+Enum promo_status {
+  active
+  expired
+  depleted
+}
+
+// ─── TABLES ──────────────────────────────────────────────────
+
+Table users {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  email varchar(255) [not null, unique, note: 'Email đăng nhập']
+  display_name varchar(100)
+  avatar_url text
+  is_active boolean [not null, default: true]
+  email_verified boolean [not null, default: false]
+  last_login_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Profile người dùng — không lưu password'
+}
+
+Table user_providers {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  user_id uuid [not null, ref: > users.id]
+  provider auth_provider_type [not null]
+  provider_uid varchar(255) [note: 'Google sub ID, Facebook ID...']
+  provider_email varchar(255)
+  provider_data jsonb [note: 'OAuth tokens, profile extras']
+  password_hash varchar(255) [note: 'Chỉ khi provider = email']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, provider) [unique, name: 'uq_user_provider']
+    (provider, provider_uid) [unique, name: 'uq_provider_uid']
+    user_id [name: 'idx_providers_user']
+  }
+
+  Note: 'Multi-provider auth — 1 user có thể link email + Google'
+}
+
+Table token_packages {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  slug varchar(50) [not null, unique, note: 'payg, basic, premium']
+  name varchar(100) [not null]
+  package_type package_type [not null]
+  price_usd decimal(10,2) [not null]
+  input_tokens bigint [not null, default: 0, note: '55M, 118M...']
+  output_tokens bigint [not null, default: 0, note: '27M, 59M...']
+  input_rate_per_million decimal(10,4) [default: 0, note: '$0.20 for payg']
+  output_rate_per_million decimal(10,4) [default: 0, note: '$0.40 for payg']
+  is_active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Định nghĩa gói: payg ($0.20/$0.40 per 1M) | basic ($10) | premium ($19)'
+}
+
+Table wallets {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  user_id uuid [not null, unique, ref: - users.id]
+  balance_cents bigint [not null, default: 0, note: 'USD cents (1$ = 100)']
+  total_deposited_cents bigint [not null, default: 0]
+  total_spent_cents bigint [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Số dư tiền USD (cents) của client'
+}
+
+Table user_token_balances {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  user_id uuid [not null, ref: > users.id]
+  package_id uuid [not null, ref: > token_packages.id]
+  transaction_id uuid [ref: > transactions.id]
+  initial_input_tokens bigint [not null]
+  initial_output_tokens bigint [not null]
+  remaining_input_tokens bigint [not null]
+  remaining_output_tokens bigint [not null]
+  expires_at timestamptz [note: 'NULL = không giới hạn']
+  is_exhausted boolean [not null, default: false]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'idx_token_bal_user']
+    (user_id, is_exhausted) [name: 'idx_token_bal_active']
+  }
+
+  Note: 'Token còn lại per gói đã mua — FIFO consumption'
+}
+
+Table transactions {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  user_id uuid [not null, ref: > users.id]
+  type transaction_type [not null]
+  status transaction_status [not null, default: 'pending']
+  amount_cents bigint [not null, note: 'USD cents']
+  currency varchar(3) [not null, default: 'USD']
+  package_id uuid [ref: > token_packages.id]
+  payment_method payment_method [not null]
+  gateway_txn_id varchar(255)
+  gateway_response jsonb
+  description text
+  ip_address varchar(45)
+  promo_code_id uuid [ref: > promo_codes.id]
+  completed_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'idx_txn_user']
+    status [name: 'idx_txn_status']
+    created_at [name: 'idx_txn_created']
+    (payment_method, gateway_txn_id) [name: 'idx_txn_gateway']
+  }
+
+  Note: 'Lịch sử nạp tiền (deposit) & mua gói (package_purchase)'
+}
+
+Table usage_logs {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  user_id uuid [not null, ref: > users.id]
+  feature ocr_feature_type [not null]
+  input_tokens_used bigint [not null, default: 0]
+  output_tokens_used bigint [not null, default: 0]
+  token_balance_id uuid [ref: > user_token_balances.id, note: 'NULL = payg']
+  cost_cents bigint [default: 0, note: 'Chi phí nếu payg']
+  input_metadata jsonb [note: '{ file_name, file_size, mime_type }']
+  output_metadata jsonb [note: '{ text_length, confidence, provider }']
+  ip_address varchar(45)
+  user_agent text
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'idx_usage_user']
+    feature [name: 'idx_usage_feature']
+    created_at [name: 'idx_usage_created']
+    (user_id, created_at) [name: 'idx_usage_user_time']
+  }
+
+  Note: 'Audit trail — mỗi lần dùng OCR/AI/Export ghi 1 record (không cho UPDATE/DELETE)'
+}
+
+Table promo_codes {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  code varchar(50) [not null, unique]
+  description text
+  status promo_status [not null, default: 'active']
+  discount_percent int [note: '20 = giảm 20%']
+  discount_cents bigint [note: '500 = giảm $5.00']
+  bonus_input_tokens bigint [default: 0]
+  bonus_output_tokens bigint [default: 0]
+  max_uses int [note: 'NULL = unlimited']
+  current_uses int [not null, default: 0]
+  max_uses_per_user int [default: 1]
+  applicable_packages varchar [note: 'basic, premium']
+  min_amount_cents bigint [default: 0]
+  starts_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    code [name: 'idx_promo_code']
+    status [name: 'idx_promo_status']
+  }
+
+  Note: 'Mã khuyến mãi — discount hoặc bonus tokens'
+}
+
+Table promo_usages {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  promo_code_id uuid [not null, ref: > promo_codes.id]
+  user_id uuid [not null, ref: > users.id]
+  transaction_id uuid [not null, ref: > transactions.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (promo_code_id, user_id) [name: 'idx_promo_usage_user']
+  }
+
+  Note: 'Tracking ai đã dùng promo code nào'
+}

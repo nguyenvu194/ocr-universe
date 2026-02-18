@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "crons": [
+        {
+            "path": "/api/cron/sync-rates",
+            "schedule": "*/120 * * * *"
+        }
+    ],
+    "github": {
+        "silent": true
+    },
+    "cleanUrls": true
+}
