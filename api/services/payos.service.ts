@@ -43,8 +43,8 @@ export class PayOSService {
             orderCode,
             amount: amountVND,
             description: (description || "Nap tien OCR Universe").substring(0, 25),
-            returnUrl: process.env.PAYMENT_RETURN_URL || "http://localhost:3001/account/billing?payment=success",
-            cancelUrl: process.env.PAYMENT_CANCEL_URL || "http://localhost:3001/account/billing?payment=cancelled",
+            returnUrl: process.env.PAYMENT_RETURN_URL || `${process.env.SERVER_URL || "http://localhost"}:3001/account/billing?payment=success`,
+            cancelUrl: process.env.PAYMENT_CANCEL_URL || `${process.env.SERVER_URL || "http://localhost"}:3001/account/billing?payment=cancelled`,
         });
 
         return {

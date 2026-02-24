@@ -58,7 +58,7 @@ export class LemonService {
                     },
                     product_options: {
                         enabled_variants: [parseInt(variantId)],
-                        redirect_url: process.env.PAYMENT_RETURN_URL || "http://localhost:3001/account/billing?payment=success",
+                        redirect_url: process.env.PAYMENT_RETURN_URL || `${process.env.SERVER_URL || "http://localhost"}:3001/account/billing?payment=success`,
                     },
                 },
                 relationships: {

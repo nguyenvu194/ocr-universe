@@ -28,8 +28,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // CORS (cho phép frontend Next.js gọi API)
+const serverUrl = process.env.SERVER_URL || "http://localhost";
 app.use((_req, res, next) => {
-    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "http://localhost:3001");
+    res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || `${serverUrl}:3001`);
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (_req.method === "OPTIONS") {

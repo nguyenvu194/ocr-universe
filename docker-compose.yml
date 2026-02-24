@@ -41,12 +41,14 @@ services:
   # Frontend UI
   ui:
     build:
-      context: .
-      dockerfile: ./ui/Dockerfile
+      context: ./ui
+      dockerfile: Dockerfile
+      args:
+        - SERVER_URL=${SERVER_URL:-http://localhost}
     container_name: ocr_ui
     restart: always
     ports:
-      - "3001:3000" # Map cổng 3001 ra ngoài để bạn truy cập
+      - "3001:3000"
     env_file: .env
     depends_on:
       - api
