@@ -27,18 +27,22 @@ services:
       retries: 5
     # Backend API
   api:
-    build: ./src
+    build:
+      context: ./api
+      dockerfile: Dockerfile
     container_name: ocr_api
     restart: always
     ports:
       - "4000:4000"
     env_file: .env
     depends_on:
-      - postgres_db
+      - postgres
 
   # Frontend UI
   ui:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: ./ui/Dockerfile
     container_name: ocr_ui
     restart: always
     ports:
