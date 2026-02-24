@@ -27,34 +27,32 @@ const PORT = parseInt(process.env.PORT || "4000", 10);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// CORS (cho phép frontend Next.js gọi API)
-// const serverUrl = process.env.SERVER_URL || "http://localhost";
-// app.use((_req, res, next) => {
-//     res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || `${serverUrl}:3001`);
-//     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-//     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//     if (_req.method === "OPTIONS") {
-//         return res.sendStatus(200);
-//     }
-//     next();
-// });
-
+// CORS — cho phép frontend gọi API
 const serverUrl = process.env.SERVER_URL || "http://localhost";
-// Ưu tiên lấy FRONTEND_URL từ môi trường, nếu không có mới dùng serverUrl gốc
-const frontendUrl = process.env.FRONTEND_URL || serverUrl;
+const allowedOrigins = [
+    `${serverUrl}:3001`,          // UI qua docker port mapping
+    `${serverUrl}:3000`,          // UI port mặc định
+    serverUrl,                     // Không có port
+    "http://localhost:3001",       // Dev local
+    "http://localhost:3000",
+];
+// Nếu có FRONTEND_URL riêng, thêm vào
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
 app.use((_req, res, next) => {
     const origin = _req.headers.origin;
 
-    // Kiểm tra nếu origin gửi lên khớp với cấu hình của chúng ta
-    if (origin === frontendUrl || origin === `${serverUrl}:3001`) {
+    if (origin && allowedOrigins.includes(origin)) {
         res.header("Access-Control-Allow-Origin", origin);
+    } else if (origin) {
+        console.warn(`[CORS] Blocked origin: ${origin}`);
+        console.warn(`[CORS] Allowed: ${allowedOrigins.join(", ")}`);
     }
 
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-    // CỰC KỲ QUAN TRỌNG cho Google Login
     res.header("Access-Control-Allow-Credentials", "true");
 
     if (_req.method === "OPTIONS") {
