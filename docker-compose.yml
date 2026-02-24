@@ -45,11 +45,14 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVER_URL=${SERVER_URL:-http://localhost}
+        - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     container_name: ocr_ui
     restart: always
     ports:
       - "3001:3000"
     env_file: .env
+    environment:
+      - PORT=3000
     depends_on:
       - api
 
