@@ -1,0 +1,275 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model promo_codes {
+  id                  String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code                String         @unique(map: "uq_promo_code") @db.VarChar(50)
+  description         String?
+  status              promo_status   @default(active)
+  discount_percent    Int?
+  discount_cents      BigInt?
+  bonus_input_tokens  BigInt?        @default(0)
+  bonus_output_tokens BigInt?        @default(0)
+  max_uses            Int?
+  current_uses        Int            @default(0)
+  max_uses_per_user   Int?           @default(1)
+  applicable_packages package_type[]
+  min_amount_cents    BigInt?        @default(0)
+  starts_at           DateTime       @default(now()) @db.Timestamptz(6)
+  expires_at          DateTime?      @db.Timestamptz(6)
+  created_at          DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime       @default(now()) @db.Timestamptz(6)
+  promo_usages        promo_usages[]
+
+  @@index([code], map: "idx_promo_code", where: raw("(status = 'active'::promo_status)"))
+  @@index([status], map: "idx_promo_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model promo_usages {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  promo_code_id  String       @db.Uuid
+  user_id        String       @db.Uuid
+  transaction_id String       @db.Uuid
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  promo_codes    promo_codes  @relation(fields: [promo_code_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_promo_usage_code")
+  transactions   transactions @relation(fields: [transaction_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_promo_usage_txn")
+  users          users        @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_promo_usage_user")
+
+  @@index([promo_code_id, user_id], map: "idx_promo_usage_user")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model token_packages {
+  id                      String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  slug                    String                @unique(map: "uq_packages_slug") @db.VarChar(50)
+  name                    String                @db.VarChar(100)
+  package_type            package_type
+  price_usd               Decimal               @db.Decimal(10, 2)
+  input_tokens            BigInt                @default(0)
+  output_tokens           BigInt                @default(0)
+  input_rate_per_million  Decimal?              @default(0) @db.Decimal(10, 4)
+  output_rate_per_million Decimal?              @default(0) @db.Decimal(10, 4)
+  is_active               Boolean               @default(true)
+  sort_order              Int                   @default(0)
+  created_at              DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime              @default(now()) @db.Timestamptz(6)
+  transactions            transactions[]
+  user_token_balances     user_token_balances[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model transactions {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id          String             @db.Uuid
+  type             transaction_type
+  status           transaction_status @default(pending)
+  amount_cents     BigInt
+  currency         String             @default("USD") @db.VarChar(3)
+  package_id       String?            @db.Uuid
+  payment_method   payment_method
+  gateway_txn_id   String?            @db.VarChar(255)
+  gateway_response Json?
+  description      String?
+  ip_address       String?            @db.Inet
+  promo_code_id    String?            @db.Uuid
+  provider         String?            @db.VarChar(20)
+  order_code       BigInt?            @unique(map: "uq_txn_order_code")
+  provider_txn_id  String?            @db.VarChar(255)
+  payment_url      String?
+  completed_at     DateTime?          @db.Timestamptz(6)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  promo_usages     promo_usages[]
+  token_packages   token_packages?    @relation(fields: [package_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_txn_package")
+  users            users              @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_txn_user")
+
+  @@index([created_at(sort: Desc)], map: "idx_txn_created")
+  @@index([payment_method, gateway_txn_id], map: "idx_txn_gateway")
+  @@index([status], map: "idx_txn_status", where: raw("(status = 'pending'::transaction_status)"))
+  @@index([user_id], map: "idx_txn_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model usage_logs {
+  id                  String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id             String               @db.Uuid
+  feature             ocr_feature_type
+  input_tokens_used   BigInt               @default(0)
+  output_tokens_used  BigInt               @default(0)
+  token_balance_id    String?              @db.Uuid
+  cost_cents          BigInt?              @default(0)
+  input_metadata      Json?
+  output_metadata     Json?
+  ip_address          String?              @db.Inet
+  user_agent          String?
+  created_at          DateTime             @default(now()) @db.Timestamptz(6)
+  user_token_balances user_token_balances? @relation(fields: [token_balance_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usage_token_bal")
+  users               users                @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_usage_user")
+
+  @@index([created_at(sort: Desc)], map: "idx_usage_created")
+  @@index([feature], map: "idx_usage_feature")
+  @@index([user_id], map: "idx_usage_user")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_usage_user_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_providers {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id        String             @db.Uuid
+  provider       auth_provider_type
+  provider_uid   String?            @db.VarChar(255)
+  provider_email String?            @db.VarChar(255)
+  provider_data  Json?
+  password_hash  String?            @db.VarChar(255)
+  created_at     DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime           @default(now()) @db.Timestamptz(6)
+  users          users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_providers_user")
+
+  @@unique([provider, provider_uid], map: "uq_provider_uid")
+  @@unique([user_id, provider], map: "uq_user_provider")
+  @@index([provider, provider_uid], map: "idx_providers_lookup")
+  @@index([user_id], map: "idx_providers_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_token_balances {
+  id                      String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                 String         @db.Uuid
+  package_id              String         @db.Uuid
+  transaction_id          String?        @db.Uuid
+  initial_input_tokens    BigInt
+  initial_output_tokens   BigInt
+  remaining_input_tokens  BigInt
+  remaining_output_tokens BigInt
+  expires_at              DateTime?      @db.Timestamptz(6)
+  is_exhausted            Boolean        @default(false)
+  created_at              DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime       @default(now()) @db.Timestamptz(6)
+  usage_logs              usage_logs[]
+  token_packages          token_packages @relation(fields: [package_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_token_bal_pkg")
+  users                   users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_token_bal_user")
+
+  @@index([user_id, is_exhausted], map: "idx_token_bal_active", where: raw("(is_exhausted = false)"))
+  @@index([user_id], map: "idx_token_bal_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email               String                @unique(map: "uq_users_email") @db.VarChar(255)
+  display_name        String?               @db.VarChar(100)
+  avatar_url          String?
+  is_active           Boolean               @default(true)
+  email_verified      Boolean               @default(false)
+  last_login_at       DateTime?             @db.Timestamptz(6)
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime              @default(now()) @db.Timestamptz(6)
+  promo_usages        promo_usages[]
+  transactions        transactions[]
+  usage_logs          usage_logs[]
+  user_providers      user_providers[]
+  user_token_balances user_token_balances[]
+  wallets             wallets?
+
+  @@index([is_active], map: "idx_users_active", where: raw("(is_active = true)"))
+  @@index([created_at(sort: Desc)], map: "idx_users_created_at")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model wallets {
+  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id               String   @unique(map: "uq_wallets_user") @db.Uuid
+  balance_cents         BigInt   @default(0)
+  total_deposited_cents BigInt   @default(0)
+  total_spent_cents     BigInt   @default(0)
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime @default(now()) @db.Timestamptz(6)
+  users                 users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_wallets_user")
+}
+
+enum auth_provider_type {
+  email
+  google
+  facebook
+  github
+}
+
+enum ocr_feature_type {
+  ocr_basic
+  ocr_advanced
+  ai_reconstruct
+  ai_translate
+  ai_summarize
+  export_pdf
+  export_docx
+  export_xlsx
+}
+
+enum package_type {
+  payg
+  basic
+  premium
+}
+
+enum payment_method {
+  momo
+  vnpay
+  zalopay
+  bank_transfer
+  stripe
+  manual
+  payos
+  lemon_squeezy
+  sepay
+}
+
+model webhook_logs {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  provider       String    @db.VarChar(30)
+  event_type     String?   @db.VarChar(50)
+  payload        Json
+  status         String?   @default("received") @db.VarChar(20)
+  matched_txn_id String?   @db.Uuid
+  ip_address     String?   @db.Inet
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([provider], map: "idx_webhook_logs_provider")
+  @@index([created_at(sort: Desc)], map: "idx_webhook_logs_created")
+}
+
+enum promo_status {
+  active
+  expired
+  depleted
+}
+
+enum transaction_status {
+  pending
+  success
+  failed
+  refunded
+  paid
+  cancelled
+}
+
+enum transaction_type {
+  deposit
+  package_purchase
+  payg_topup
+}
