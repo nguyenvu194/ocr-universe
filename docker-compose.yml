@@ -9,7 +9,7 @@ services:
     container_name: ocr_postgres
     restart: unless-stopped
     ports:
-      - "${DB_PORT:-5432}:5432" # Lấy port từ file .env, nếu không có thì mặc định 5432
+      - "${DB_PORT:-5433}:5432" # Lấy port từ file .env, nếu không có thì mặc định 5432
     environment:
       POSTGRES_DB: ${DB_NAME:-ocr_universe}
       POSTGRES_USER: ${DB_USER:-ocr_admin}
@@ -25,6 +25,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    # Backend API
+  api:
+    build: ./src
+    container_name: ocr_api
+    restart: always
+    ports:
+      - "4000:4000"
+    env_file: .env
+    depends_on:
+      - postgres_db
+
+  # Frontend UI
+  ui:
+    build: ./frontend
+    container_name: ocr_ui
+    restart: always
+    ports:
+      - "3001:3000" # Map cổng 3001 ra ngoài để bạn truy cập
+    env_file: .env
+    depends_on:
+      - api
 
 volumes:
   pgdata:
