@@ -35,7 +35,7 @@ interface SepayData {
 }
 
 export default function DepositPage() {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
 
     const [amount, setAmount] = useState<string>("");
     const [provider, setProvider] = useState<Provider>("SEPAY");
@@ -88,6 +88,8 @@ export default function DepositPage() {
                     if (data.data.status === "paid" || data.data.status === "success") {
                         // Dừng polling khi đã thanh toán
                         if (pollRef.current) clearInterval(pollRef.current);
+                        // Cập nhật số dư ví trên Header
+                        refreshUser();
                     }
                 }
             } catch { /* silently retry */ }
@@ -160,7 +162,7 @@ export default function DepositPage() {
                 setSepayData({
                     transactionId: data.data.transactionId,
                     qrUrl: data.data.qrUrl,
-                    content: data.data.paymentCode,
+                    content: data.data.paymentCode?.replace(/-/g, "") || data.data.paymentCode,
                     amountVND: data.data.amountVND,
                     bankName: data.data.bankName,
                     accountNumber: data.data.accountNumber,

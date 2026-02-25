@@ -9,7 +9,7 @@ services:
     container_name: ocr_postgres
     restart: unless-stopped
     ports:
-      - "${DB_PORT:-5433}:5432" # Lấy port từ file .env, nếu không có thì mặc định 5432
+      - "${EXTERNAL_DB_PORT:-5434}:5432"
     environment:
       POSTGRES_DB: ${DB_NAME:-ocr_universe}
       POSTGRES_USER: ${DB_USER:-ocr_admin}

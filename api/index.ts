@@ -14,6 +14,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import billingRoutes from "./modules/billing/billing.routes";
 import paymentRoutes from "./modules/payment/payment.routes";
 import cronRoutes from "./modules/cron/cron.routes";
+import { registerExchangeRateCron } from "./jobs/exchange-rate.cron";
 import { authMiddleware } from "./middleware/auth.middleware";
 
 // Load .env
@@ -110,6 +111,8 @@ async function bootstrap() {
         process.exit(1);
     }
 
+    // Register cron jobs
+    registerExchangeRateCron();
 
     app.listen(PORT, () => {
         console.log(`\n🚀 OCR Universe Backend running at http://localhost:${PORT}`);
