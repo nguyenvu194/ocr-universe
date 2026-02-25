@@ -6,7 +6,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -185,7 +184,7 @@ model users {
   usage_logs          usage_logs[]
   user_providers      user_providers[]
   user_token_balances user_token_balances[]
-  wallets             wallets?
+  wallets             wallets[]
 
   @@index([is_active], map: "idx_users_active", where: raw("(is_active = true)"))
   @@index([created_at(sort: Desc)], map: "idx_users_created_at")
@@ -194,14 +193,27 @@ model users {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model wallets {
-  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_id               String   @unique(map: "uq_wallets_user") @db.Uuid
-  balance_cents         BigInt   @default(0)
-  total_deposited_cents BigInt   @default(0)
-  total_spent_cents     BigInt   @default(0)
-  created_at            DateTime @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime @default(now()) @db.Timestamptz(6)
-  users                 users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_wallets_user")
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id         String     @db.Uuid
+  currency_id     String     @db.Uuid
+  balance         BigInt     @default(0)
+  total_deposited BigInt     @default(0)
+  total_spent     BigInt     @default(0)
+  created_at      DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime   @default(now()) @db.Timestamptz(6)
+  users           users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_wallets_user")
+  currencies      currencies @relation(fields: [currency_id], references: [id], map: "fk_wallets_currency")
+
+  @@unique([user_id, currency_id], map: "uq_wallets_user_currency")
+}
+
+model currencies {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code          String    @unique(map: "uq_currencies_code") @db.VarChar(10)
+  type          Int       @default(0) @db.SmallInt
+  description   String?   @db.VarChar(255)
+  decimal_place Int       @default(2) @db.SmallInt
+  wallets       wallets[]
 }
 
 enum auth_provider_type {

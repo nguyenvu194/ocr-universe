@@ -17,6 +17,15 @@ import { SepayService } from "../../services/sepay.service";
 
 type Provider = "PAYOS" | "LEMON_SQUEEZY" | "SEPAY";
 
+/** Helper: get or create currency_id by code */
+async function getCurrencyId(client: any, code: string): Promise<string> {
+    const { rows } = await client.query(
+        `SELECT id FROM currencies WHERE code = $1`, [code]
+    );
+    if (!rows[0]) throw new Error(`Currency ${code} not found`);
+    return rows[0].id;
+}
+
 export class PaymentController {
     /**
      * POST /payment/deposit
@@ -244,14 +253,17 @@ export class PaymentController {
                         [txn.id, JSON.stringify(verifiedData)]
                     );
 
+                    // Get VND currency_id
+                    const currencyId = await getCurrencyId(client, 'VND');
+
                     await client.query(
-                        `INSERT INTO wallets (user_id, balance_cents, total_deposited_cents)
-                         VALUES ($1, $2, $2)
-                         ON CONFLICT (user_id) DO UPDATE SET
-                             balance_cents = wallets.balance_cents + $2,
-                             total_deposited_cents = wallets.total_deposited_cents + $2,
+                        `INSERT INTO wallets (user_id, currency_id, balance, total_deposited)
+                         VALUES ($1, $3, $2, $2)
+                         ON CONFLICT ON CONSTRAINT uq_wallets_user_currency DO UPDATE SET
+                             balance = wallets.balance + $2,
+                             total_deposited = wallets.total_deposited + $2,
                              updated_at = NOW()`,
-                        [txn.user_id, txn.amount_cents]
+                        [txn.user_id, txn.amount_cents, currencyId]
                     );
 
                     await client.query("COMMIT");
@@ -372,14 +384,17 @@ export class PaymentController {
                     [txn.id, JSON.stringify(req.body)]
                 );
 
+                // Get USD currency_id
+                const currencyId = await getCurrencyId(client, 'USD');
+
                 await client.query(
-                    `INSERT INTO wallets (user_id, balance_cents, total_deposited_cents)
-                     VALUES ($1, $2, $2)
-                     ON CONFLICT (user_id) DO UPDATE SET
-                         balance_cents = wallets.balance_cents + $2,
-                         total_deposited_cents = wallets.total_deposited_cents + $2,
+                    `INSERT INTO wallets (user_id, currency_id, balance, total_deposited)
+                     VALUES ($1, $3, $2, $2)
+                     ON CONFLICT ON CONSTRAINT uq_wallets_user_currency DO UPDATE SET
+                         balance = wallets.balance + $2,
+                         total_deposited = wallets.total_deposited + $2,
                          updated_at = NOW()`,
-                    [txn.user_id, txn.amount_cents]
+                    [txn.user_id, txn.amount_cents, currencyId]
                 );
 
                 await client.query("COMMIT");
@@ -554,14 +569,17 @@ export class PaymentController {
                 );
 
                 // Cộng wallet cho user (dùng clientId từ paymentCode hoặc user_id trong txn)
+                // Get VND currency_id
+                const currencyId = await getCurrencyId(client, 'VND');
+
                 await client.query(
-                    `INSERT INTO wallets (user_id, balance_cents, total_deposited_cents)
-                     VALUES ($1, $2, $2)
-                     ON CONFLICT (user_id) DO UPDATE SET
-                         balance_cents = wallets.balance_cents + $2,
-                         total_deposited_cents = wallets.total_deposited_cents + $2,
+                    `INSERT INTO wallets (user_id, currency_id, balance, total_deposited)
+                     VALUES ($1, $3, $2, $2)
+                     ON CONFLICT ON CONSTRAINT uq_wallets_user_currency DO UPDATE SET
+                         balance = wallets.balance + $2,
+                         total_deposited = wallets.total_deposited + $2,
                          updated_at = NOW()`,
-                    [txn.user_id, receivedAmount]
+                    [txn.user_id, receivedAmount, currencyId]
                 );
 
                 // Update webhook log

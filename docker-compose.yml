@@ -18,7 +18,7 @@ services:
       # Lưu dữ liệu bền vững (Persistent Data)
       - pgdata:/var/lib/postgresql/data
       # Tự động chạy script tạo bảng (init.sql) khi khởi tạo lần đầu
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./api/database/00_init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     # Healthcheck: Giúp các service khác biết khi nào DB thực sự sẵn sàng
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-ocr_admin} -d ${DB_NAME:-ocr_universe}" ]

@@ -40,7 +40,7 @@ export interface UserProfile {
     avatarUrl: string | null;
     isActive: boolean;
     emailVerified: boolean;
-    balanceCents: number;
+    balance: number;
     createdAt: Date;
 }
 
@@ -105,7 +105,7 @@ export class AuthService {
         // Hash password
         const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-        // Transaction: tạo user + provider + wallet
+        // Transaction: tạo user + provider (wallet tạo lazy khi nạp tiền lần đầu)
         const [user] = await query(
             `INSERT INTO users (email, display_name, email_verified)
              VALUES ($1, $2, FALSE)
@@ -117,12 +117,6 @@ export class AuthService {
             `INSERT INTO user_providers (user_id, provider, password_hash)
              VALUES ($1, 'email', $2)`,
             [user.id, passwordHash]
-        );
-
-        await query(
-            `INSERT INTO wallets (user_id, balance_cents)
-             VALUES ($1, 0)`,
-            [user.id]
         );
 
         // Generate token
@@ -176,14 +170,14 @@ export class AuthService {
 
         // Get balance
         const [wallet] = await query(
-            `SELECT balance_cents FROM wallets WHERE user_id = $1`,
+            `SELECT balance FROM wallets WHERE user_id = $1`,
             [row.id]
         );
 
         const token = this.signToken({ userId: row.id, email: row.email });
 
         return {
-            user: this.mapUserProfile(row, wallet?.balance_cents ?? 0),
+            user: this.mapUserProfile(row, wallet?.balance ?? 0),
             token,
         };
     }
@@ -222,14 +216,14 @@ export class AuthService {
             await query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [existingProvider.id]);
 
             const [wallet] = await query(
-                `SELECT balance_cents FROM wallets WHERE user_id = $1`,
+                `SELECT balance FROM wallets WHERE user_id = $1`,
                 [existingProvider.id]
             );
 
             const token = this.signToken({ userId: existingProvider.id, email: existingProvider.email });
 
             return {
-                user: this.mapUserProfile(existingProvider, wallet?.balance_cents ?? 0),
+                user: this.mapUserProfile(existingProvider, wallet?.balance ?? 0),
                 token,
                 action: "login",
             };
@@ -266,7 +260,7 @@ export class AuthService {
             );
 
             const [wallet] = await query(
-                `SELECT balance_cents FROM wallets WHERE user_id = $1`,
+                `SELECT balance FROM wallets WHERE user_id = $1`,
                 [existingUser.id]
             );
 
@@ -274,7 +268,7 @@ export class AuthService {
             const token = this.signToken({ userId: existingUser.id, email: existingUser.email });
 
             return {
-                user: this.mapUserProfile(updatedUser, wallet?.balance_cents ?? 0),
+                user: this.mapUserProfile(updatedUser, wallet?.balance ?? 0),
                 token,
                 action: "linked",
             };
@@ -288,6 +282,7 @@ export class AuthService {
             [googleProfile.email, googleProfile.name, googleProfile.picture]
         );
 
+        // Wallet tạo lazy khi nạp tiền lần đầu
         await query(
             `INSERT INTO user_providers (user_id, provider, provider_uid, provider_email, provider_data)
              VALUES ($1, 'google', $2, $3, $4)`,
@@ -297,11 +292,6 @@ export class AuthService {
                 googleProfile.email,
                 JSON.stringify({ name: googleProfile.name, picture: googleProfile.picture }),
             ]
-        );
-
-        await query(
-            `INSERT INTO wallets (user_id, balance_cents) VALUES ($1, 0)`,
-            [newUser.id]
         );
 
         const token = this.signToken({ userId: newUser.id, email: newUser.email });
@@ -419,11 +409,6 @@ export class AuthService {
             [user.id, passwordHash]
         );
 
-        await query(
-            `INSERT INTO wallets (user_id, balance_cents) VALUES ($1, 0)`,
-            [user.id]
-        );
-
         // 6. Xoá OTP (single-use)
         await query(`DELETE FROM otp_verifications WHERE email = $1`, [email]);
 
@@ -460,7 +445,7 @@ export class AuthService {
         const [user] = await query(
             `SELECT u.id, u.email, u.display_name, u.avatar_url,
                     u.is_active, u.email_verified, u.created_at,
-                    COALESCE(w.balance_cents, 0) as balance_cents
+                    COALESCE(w.balance, 0) as balance
              FROM users u
              LEFT JOIN wallets w ON w.user_id = u.id
              WHERE u.id = $1`,
@@ -471,7 +456,7 @@ export class AuthService {
             throw new AuthError("USER_NOT_FOUND", "Không tìm thấy người dùng", 404);
         }
 
-        return this.mapUserProfile(user, user.balance_cents);
+        return this.mapUserProfile(user, user.balance);
     }
 
     // ─── Private Helpers ─────────────────────────────────
@@ -506,7 +491,7 @@ export class AuthService {
     /**
      * Map DB row → UserProfile
      */
-    private static mapUserProfile(row: any, balanceCents: number): UserProfile {
+    private static mapUserProfile(row: any, balance: number): UserProfile {
         return {
             id: row.id,
             email: row.email,
@@ -514,7 +499,7 @@ export class AuthService {
             avatarUrl: row.avatar_url,
             isActive: row.is_active,
             emailVerified: row.email_verified,
-            balanceCents: Number(balanceCents),
+            balance: Number(balance),
             createdAt: row.created_at,
         };
     }
