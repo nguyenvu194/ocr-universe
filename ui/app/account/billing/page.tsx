@@ -65,9 +65,9 @@ export default function BillingPage() {
 
     if (!user) return null;
 
-    const balanceCents = wallet?.wallet?.balance_cents ?? user.balanceCents;
-    const totalDeposited = wallet?.wallet?.total_deposited_cents ?? 0;
-    const totalSpent = wallet?.wallet?.total_spent_cents ?? 0;
+    const balanceAmount = wallet?.wallet?.balance ?? user.balance ?? 0;
+    const totalDeposited = wallet?.wallet?.total_deposited ?? 0;
+    const totalSpent = wallet?.wallet?.total_spent ?? 0;
 
     // Aggregate token balances across all active packages
     const totalInputTokens = wallet?.tokenBalances?.reduce(
@@ -133,7 +133,7 @@ export default function BillingPage() {
                         <div className="w-20 h-6 rounded bg-white/5 animate-pulse" />
                     ) : (
                         <p className="text-lg font-bold text-white">
-                            {Number(balanceCents).toLocaleString("vi-VN")}đ
+                            {Number(balanceAmount).toLocaleString("vi-VN")}đ
                         </p>
                     )}
                     <Link
@@ -159,14 +159,14 @@ export default function BillingPage() {
                                 <ArrowDownRight className="w-3 h-3 text-blue-400" />
                                 <span className="text-xs text-white/70">Nạp:</span>
                                 <span className="text-xs font-medium text-white/80">
-                                    {(totalDeposited / 100).toLocaleString("vi-VN")}đ
+                                    {Number(totalDeposited).toLocaleString("vi-VN")}đ
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <ArrowUpRight className="w-3 h-3 text-orange-400" />
                                 <span className="text-xs text-white/70">Chi:</span>
                                 <span className="text-xs font-medium text-white/80">
-                                    {(totalSpent / 100).toLocaleString("vi-VN")}đ
+                                    {Number(totalSpent).toLocaleString("vi-VN")}đ
                                 </span>
                             </div>
                         </div>

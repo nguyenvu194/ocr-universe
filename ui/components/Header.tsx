@@ -90,14 +90,14 @@ export default function Header() {
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/8 h-9">
                                             <Wallet className="w-3.5 h-3.5 text-blue-400" />
                                             <span className="text-xs font-medium text-white/70">
-                                                {user.balanceCents.toLocaleString("vi-VN")}đ
+                                                {(user.balance ?? 0).toLocaleString("vi-VN")}đ
                                             </span>
                                         </div>
                                     ) : (
                                         <Link href="/account/billing" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/8 h-9 hover:bg-white/10 hover:border-white/15 transition-all cursor-pointer">
                                             <Wallet className="w-3.5 h-3.5 text-blue-400" />
                                             <span className="text-xs font-medium text-white/70">
-                                                {user.balanceCents.toLocaleString("vi-VN")}đ
+                                                {(user.balance ?? 0).toLocaleString("vi-VN")}đ
                                             </span>
                                         </Link>
                                     )}
@@ -199,14 +199,14 @@ export default function Header() {
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8">
                                 <Wallet className="w-3 h-3 text-blue-400" />
                                 <span className="text-xs font-medium text-white/70">
-                                    {user.balanceCents.toLocaleString("vi-VN")}đ
+                                    {(user.balance ?? 0).toLocaleString("vi-VN")}đ
                                 </span>
                             </div>
                         ) : (
                             <Link href="/account/billing" className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:bg-white/10 hover:border-white/15 transition-all cursor-pointer">
                                 <Wallet className="w-3 h-3 text-blue-400" />
                                 <span className="text-xs font-medium text-white/70">
-                                    {user.balanceCents.toLocaleString("vi-VN")}đ
+                                    {(user.balance ?? 0).toLocaleString("vi-VN")}đ
                                 </span>
                             </Link>
                         )

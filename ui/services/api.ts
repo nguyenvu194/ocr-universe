@@ -30,7 +30,7 @@ export interface UserProfile {
     avatarUrl: string | null;
     isActive: boolean;
     emailVerified: boolean;
-    balanceCents: number;
+    balance: number;
     createdAt: string;
 }
 
@@ -166,9 +166,9 @@ export interface WalletInfo {
     wallet: {
         id: string;
         user_id: string;
-        balance_cents: number;
-        total_deposited_cents: number;
-        total_spent_cents: number;
+        balance: number;
+        total_deposited: number;
+        total_spent: number;
     };
     tokenBalances: Array<{
         id: string;
