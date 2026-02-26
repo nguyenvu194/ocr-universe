@@ -1,4 +1,5 @@
 import { pool, query } from "../../config/db";
+import { getAggregatedBalanceUsd } from "../../services/exchange-rate.service";
 
 /**
  * Billing Service — Nạp tiền, mua gói, trừ token
@@ -6,12 +7,22 @@ import { pool, query } from "../../config/db";
 export class BillingService {
     /**
      * Lấy thông tin ví & token balance của user
+     * Trả về tất cả ví (multi-currency) + tổng số dư quy đổi USD
      */
     static async getWalletInfo(userId: string) {
-        const [wallet] = await query(
-            `SELECT * FROM wallets WHERE user_id = $1`,
+        // Lấy tất cả ví kèm currency code
+        const wallets = await query(
+            `SELECT w.id, w.user_id, w.balance, w.total_deposited, w.total_spent,
+                    c.code as currency_code, c.description as currency_name
+             FROM wallets w
+             JOIN currencies c ON c.id = w.currency_id
+             WHERE w.user_id = $1
+             ORDER BY w.created_at ASC`,
             [userId]
         );
+
+        // Tổng số dư quy đổi USD
+        const totalBalanceUsd = await getAggregatedBalanceUsd(userId);
 
         const tokenBalances = await query(
             `SELECT tb.*, tp.name as package_name, tp.slug as package_slug
@@ -23,7 +34,7 @@ export class BillingService {
             [userId]
         );
 
-        return { wallet, tokenBalances };
+        return { wallets, totalBalanceUsd, tokenBalances };
     }
 
     /**

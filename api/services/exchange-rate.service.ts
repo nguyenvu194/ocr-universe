@@ -123,3 +123,32 @@ async function getRate(fromCode: string, toCode: string): Promise<number> {
 
     return parseFloat(row.rate);
 }
+
+// ─── Aggregated Balance ─────────────────────────────────
+
+/**
+ * Tính tổng số dư tất cả ví của user, quy đổi sang USD.
+ *
+ * Logic SQL:
+ *   - JOIN wallets → currencies → conversion_rates
+ *   - Nếu currency = USD → balance giữ nguyên
+ *   - Nếu currency khác → balance / rate(USD→currency)
+ *   - SUM tất cả → total USD
+ */
+export async function getAggregatedBalanceUsd(userId: string): Promise<number> {
+    const [row] = await query<{ total_usd: string }>(
+        `SELECT COALESCE(SUM(
+            CASE
+                WHEN c.code = 'USD' THEN w.balance
+                ELSE w.balance / NULLIF(cr.rate, 0)
+            END
+        ), 0) AS total_usd
+         FROM wallets w
+         JOIN currencies c ON c.id = w.currency_id
+         LEFT JOIN conversion_rates cr
+           ON cr.from_code = 'USD' AND cr.to_code = c.code AND cr.is_latest = 1
+         WHERE w.user_id = $1`,
+        [userId]
+    );
+    return parseFloat(row?.total_usd ?? "0");
+}

@@ -7,8 +7,9 @@
  *   - Graceful shutdown
  */
 
+// .env đã được load bởi preload.js (node -r ./preload.js)
+
 import express from "express";
-import dotenv from "dotenv";
 import { testConnection, closePool } from "./config/db";
 import authRoutes from "./modules/auth/auth.routes";
 import billingRoutes from "./modules/billing/billing.routes";
@@ -16,9 +17,6 @@ import paymentRoutes from "./modules/payment/payment.routes";
 import cronRoutes from "./modules/cron/cron.routes";
 import { registerExchangeRateCron } from "./jobs/exchange-rate.cron";
 import { authMiddleware } from "./middleware/auth.middleware";
-
-// Load .env
-dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "4000", 10);
@@ -79,6 +77,27 @@ app.get("/api/constants/:code", async (req, res) => {
         );
         if (!row) return res.status(404).json({ success: false, error: "Not found" });
         return res.json({ success: true, data: row });
+    } catch (err: any) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ─── Public: Lấy tỉ giá ─────────────────────────────────────
+app.get("/api/exchange-rate", async (req, res) => {
+    try {
+        const { query: dbQuery } = require("./config/db");
+        const from = (req.query.from as string || "USD").toUpperCase();
+        const to = (req.query.to as string || "VND").toUpperCase();
+        const [row] = await dbQuery(
+            `SELECT rate, updated_at FROM conversion_rates
+             WHERE from_code = $1 AND to_code = $2 AND is_latest = 1`,
+            [from, to]
+        );
+        if (!row) return res.status(404).json({ success: false, error: `Rate ${from}→${to} not found` });
+        return res.json({
+            success: true,
+            data: { from, to, rate: parseFloat(row.rate), updatedAt: row.updated_at },
+        });
     } catch (err: any) {
         return res.status(500).json({ success: false, error: err.message });
     }

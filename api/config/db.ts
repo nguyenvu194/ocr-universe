@@ -9,17 +9,21 @@ dotenv.config();
  * Sử dụng connection pool để tái sử dụng connections,
  * tránh overhead tạo connection mới cho mỗi query.
  */
-export const pool = new Pool({
-    host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT || "5432", 10),
-    database: process.env.DB_NAME || "ocr_universe",
-    user: process.env.DB_USER || "ocr_admin",
-    password: process.env.DB_PASSWORD || "ocr_secret_2026",
+const poolConfig = process.env.DATABASE_URL
+    ? { connectionString: process.env.DATABASE_URL }
+    : {
+        host: process.env.DB_HOST || "localhost",
+        port: parseInt(process.env.DB_PORT || "5432", 10),
+        database: process.env.DB_NAME || "ocr_universe",
+        user: process.env.DB_USER || "ocr_admin",
+        password: process.env.DB_PASSWORD || "ocr_secret_2026",
+    };
 
-    // Pool settings
-    max: 20,                    // Tối đa 20 connections
-    idleTimeoutMillis: 30000,   // Đóng connection idle sau 30s
-    connectionTimeoutMillis: 5000, // Timeout kết nối sau 5s
+export const pool = new Pool({
+    ...poolConfig,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
 });
 
 /**

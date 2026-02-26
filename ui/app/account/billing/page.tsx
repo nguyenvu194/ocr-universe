@@ -10,10 +10,11 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     CreditCard, Wallet, Loader2, ArrowUpRight,
     ArrowDownRight, Package, RefreshCcw, Zap, ToggleLeft, ToggleRight,
+    ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth.context";
@@ -27,6 +28,7 @@ export default function BillingPage() {
     const [loadingWallet, setLoadingWallet] = useState(true);
     const [loadingTxns, setLoadingTxns] = useState(true);
     const [paygEnabled, setPaygEnabled] = useState(false);
+    const [showBalanceDetail, setShowBalanceDetail] = useState(false);
 
     const fetchWallet = useCallback(async () => {
         setLoadingWallet(true);
@@ -65,9 +67,9 @@ export default function BillingPage() {
 
     if (!user) return null;
 
-    const balanceAmount = wallet?.wallet?.balance ?? user.balance ?? 0;
-    const totalDeposited = wallet?.wallet?.total_deposited ?? 0;
-    const totalSpent = wallet?.wallet?.total_spent ?? 0;
+    const balanceUsd = wallet?.totalBalanceUsd ?? user.balanceUsd ?? 0;
+    const totalDeposited = wallet?.wallets?.reduce((sum, w) => sum + Number(w.total_deposited), 0) ?? 0;
+    const totalSpent = wallet?.wallets?.reduce((sum, w) => sum + Number(w.total_spent), 0) ?? 0;
 
     // Aggregate token balances across all active packages
     const totalInputTokens = wallet?.tokenBalances?.reduce(
@@ -132,9 +134,43 @@ export default function BillingPage() {
                     {loadingWallet ? (
                         <div className="w-20 h-6 rounded bg-white/5 animate-pulse" />
                     ) : (
-                        <p className="text-lg font-bold text-white">
-                            {Number(balanceAmount).toLocaleString("vi-VN")}đ
-                        </p>
+                        <>
+                            {/* USD Total — clickable */}
+                            <button
+                                onClick={() => setShowBalanceDetail(prev => !prev)}
+                                className="flex items-center gap-2 group cursor-pointer"
+                            >
+                                <p className="text-lg font-bold text-white">
+                                    ${balanceUsd.toFixed(4)}
+                                </p>
+                                <ChevronDown className={`w-3.5 h-3.5 text-white/40 group-hover:text-white/70 transition-all duration-200 ${showBalanceDetail ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {/* Per-currency breakdown */}
+                            <AnimatePresence>
+                                {showBalanceDetail && wallet?.wallets && wallet.wallets.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="mt-3 pt-3 border-t border-white/8 space-y-2">
+                                            <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Chi tiết</p>
+                                            {wallet.wallets.map((w) => (
+                                                <div key={w.id} className="flex items-center justify-between">
+                                                    <span className="text-xs text-white/60">{w.currency_code}</span>
+                                                    <span className="text-xs font-semibold text-white">
+                                                        {Number(w.balance).toLocaleString("vi-VN")} {w.currency_code}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </>
                     )}
                     <Link
                         href="/dashboard/deposit"

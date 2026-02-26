@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth.context";
 
-const EXCHANGE_RATE = 25_000; // 1 USD = 25,000 VND
+const FALLBACK_RATE = 25_000;  // fallback nếu API chưa có rate
 const POLL_INTERVAL = 3000; // 3s
 
 type Provider = "PAYOS" | "LEMON_SQUEEZY" | "SEPAY";
@@ -49,12 +49,16 @@ export default function DepositPage() {
     const [txnStatus, setTxnStatus] = useState<string | null>(null);
     const pollRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Dynamic exchange rate
+    const [exchangeRate, setExchangeRate] = useState<number>(FALLBACK_RATE);
+    const [rateLoading, setRateLoading] = useState(true);
+
     const QUICK_AMOUNTS = [minAmount, 5, 10, 20, 50, 100].filter(
         (v, i, arr) => arr.indexOf(v) === i
     ).sort((a, b) => a - b);
 
     const amountNum = parseFloat(amount) || 0;
-    const amountVND = Math.round(amountNum * EXCHANGE_RATE);
+    const amountVND = Math.round(amountNum * exchangeRate);
     const isValid = amountNum >= minAmount;
 
     const formatVND = (n: number) =>
@@ -109,6 +113,20 @@ export default function DepositPage() {
                     setMinAmount(Number(data.data.value));
                 }
             } catch { /* fallback to default */ }
+        })();
+
+        // Fetch exchange rate from conversion_rates
+        (async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/exchange-rate?from=USD&to=VND`
+                );
+                const data = await res.json();
+                if (data.success && data.data?.rate) {
+                    setExchangeRate(data.data.rate);
+                }
+            } catch { /* keep fallback */ }
+            finally { setRateLoading(false); }
         })();
 
         return () => {
@@ -428,7 +446,7 @@ export default function DepositPage() {
                                                 {formatVND(amountVND)}
                                             </p>
                                             <p className="text-[11px] text-slate-500 mt-1">
-                                                Tỷ giá: 1 USD = {EXCHANGE_RATE.toLocaleString("vi-VN")} VND
+                                                Tỷ giá: 1 USD = {exchangeRate.toLocaleString("vi-VN")} VND
                                             </p>
                                         </motion.div>
                                     )}
@@ -471,7 +489,7 @@ export default function DepositPage() {
                                                 {formatVND(amountVND)}
                                             </p>
                                             <p className="text-[11px] text-slate-500 mt-1">
-                                                Tỷ giá: 1 USD = {EXCHANGE_RATE.toLocaleString("vi-VN")} VND
+                                                Tỷ giá: 1 USD = {exchangeRate.toLocaleString("vi-VN")} VND
                                             </p>
                                         </motion.div>
                                     )}

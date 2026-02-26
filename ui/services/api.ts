@@ -31,6 +31,7 @@ export interface UserProfile {
     isActive: boolean;
     emailVerified: boolean;
     balance: number;
+    balanceUsd: number;
     createdAt: string;
 }
 
@@ -162,14 +163,19 @@ export interface Transaction {
     created_at: string;
 }
 
+export interface WalletItem {
+    id: string;
+    user_id: string;
+    balance: number;
+    total_deposited: number;
+    total_spent: number;
+    currency_code: string;
+    currency_name: string;
+}
+
 export interface WalletInfo {
-    wallet: {
-        id: string;
-        user_id: string;
-        balance: number;
-        total_deposited: number;
-        total_spent: number;
-    };
+    wallets: WalletItem[];
+    totalBalanceUsd: number;
     tokenBalances: Array<{
         id: string;
         package_name: string;

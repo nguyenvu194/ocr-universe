@@ -15,6 +15,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { query } from "../../config/db";
 import { EmailService } from "../../services/email.service";
+import { getAggregatedBalanceUsd } from "../../services/exchange-rate.service";
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -41,6 +42,7 @@ export interface UserProfile {
     isActive: boolean;
     emailVerified: boolean;
     balance: number;
+    balanceUsd: number;
     createdAt: Date;
 }
 
@@ -123,7 +125,7 @@ export class AuthService {
         const token = this.signToken({ userId: user.id, email: user.email });
 
         return {
-            user: this.mapUserProfile(user, 0),
+            user: this.mapUserProfile(user, 0, 0),
             token,
         };
     }
@@ -169,15 +171,11 @@ export class AuthService {
         await query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [row.id]);
 
         // Get balance
-        const [wallet] = await query(
-            `SELECT balance FROM wallets WHERE user_id = $1`,
-            [row.id]
-        );
-
+        const balanceUsd = await this.toUsd(row.id);
         const token = this.signToken({ userId: row.id, email: row.email });
 
         return {
-            user: this.mapUserProfile(row, wallet?.balance ?? 0),
+            user: this.mapUserProfile(row, 0, balanceUsd),
             token,
         };
     }
@@ -215,15 +213,11 @@ export class AuthService {
 
             await query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [existingProvider.id]);
 
-            const [wallet] = await query(
-                `SELECT balance FROM wallets WHERE user_id = $1`,
-                [existingProvider.id]
-            );
-
+            const balanceUsd = await this.toUsd(existingProvider.id);
             const token = this.signToken({ userId: existingProvider.id, email: existingProvider.email });
 
             return {
-                user: this.mapUserProfile(existingProvider, wallet?.balance ?? 0),
+                user: this.mapUserProfile(existingProvider, 0, balanceUsd),
                 token,
                 action: "login",
             };
@@ -259,16 +253,12 @@ export class AuthService {
                 [existingUser.id, googleProfile.picture]
             );
 
-            const [wallet] = await query(
-                `SELECT balance FROM wallets WHERE user_id = $1`,
-                [existingUser.id]
-            );
-
             const updatedUser = { ...existingUser, email_verified: true, avatar_url: existingUser.avatar_url || googleProfile.picture };
+            const balanceUsd = await this.toUsd(existingUser.id);
             const token = this.signToken({ userId: existingUser.id, email: existingUser.email });
 
             return {
-                user: this.mapUserProfile(updatedUser, wallet?.balance ?? 0),
+                user: this.mapUserProfile(updatedUser, 0, balanceUsd),
                 token,
                 action: "linked",
             };
@@ -297,7 +287,7 @@ export class AuthService {
         const token = this.signToken({ userId: newUser.id, email: newUser.email });
 
         return {
-            user: this.mapUserProfile(newUser, 0),
+            user: this.mapUserProfile(newUser, 0, 0),
             token,
             action: "registered",
         };
@@ -416,7 +406,7 @@ export class AuthService {
         const token = this.signToken({ userId: user.id, email: user.email });
 
         return {
-            user: this.mapUserProfile(user, 0),
+            user: this.mapUserProfile(user, 0, 0),
             token,
         };
     }
@@ -443,12 +433,10 @@ export class AuthService {
      */
     static async getProfile(userId: string): Promise<UserProfile> {
         const [user] = await query(
-            `SELECT u.id, u.email, u.display_name, u.avatar_url,
-                    u.is_active, u.email_verified, u.created_at,
-                    COALESCE(w.balance, 0) as balance
-             FROM users u
-             LEFT JOIN wallets w ON w.user_id = u.id
-             WHERE u.id = $1`,
+            `SELECT id, email, display_name, avatar_url,
+                    is_active, email_verified, created_at
+             FROM users
+             WHERE id = $1`,
             [userId]
         );
 
@@ -456,7 +444,8 @@ export class AuthService {
             throw new AuthError("USER_NOT_FOUND", "Không tìm thấy người dùng", 404);
         }
 
-        return this.mapUserProfile(user, user.balance);
+        const balanceUsd = await this.toUsd(userId);
+        return this.mapUserProfile(user, 0, balanceUsd);
     }
 
     // ─── Private Helpers ─────────────────────────────────
@@ -491,7 +480,7 @@ export class AuthService {
     /**
      * Map DB row → UserProfile
      */
-    private static mapUserProfile(row: any, balance: number): UserProfile {
+    private static mapUserProfile(row: any, balance: number, balanceUsd: number): UserProfile {
         return {
             id: row.id,
             email: row.email,
@@ -500,8 +489,20 @@ export class AuthService {
             isActive: row.is_active,
             emailVerified: row.email_verified,
             balance: Number(balance),
+            balanceUsd: Number(balanceUsd),
             createdAt: row.created_at,
         };
+    }
+
+    /**
+     * Tính tổng số dư USD từ tất cả ví của user. Returns 0 if fails.
+     */
+    private static async toUsd(userId: string): Promise<number> {
+        try {
+            return await getAggregatedBalanceUsd(userId);
+        } catch {
+            return 0;
+        }
     }
 }
 
