@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     CreditCard, Wallet, Loader2, ArrowUpRight,
     ArrowDownRight, Package, RefreshCcw, Zap, ToggleLeft, ToggleRight,
-    ChevronDown,
+    ChevronDown, X, Eye, QrCode, Clock, Copy, Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth.context";
@@ -29,6 +29,8 @@ export default function BillingPage() {
     const [loadingTxns, setLoadingTxns] = useState(true);
     const [paygEnabled, setPaygEnabled] = useState(false);
     const [showBalanceDetail, setShowBalanceDetail] = useState(false);
+    const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+    const [copiedContent, setCopiedContent] = useState(false);
 
     const fetchWallet = useCallback(async () => {
         setLoadingWallet(true);
@@ -303,6 +305,7 @@ export default function BillingPage() {
                                     <th className="text-right py-3 px-3 text-xs font-medium text-white/60 uppercase">Số tiền</th>
                                     <th className="text-center py-3 px-3 text-xs font-medium text-white/60 uppercase">Trạng thái</th>
                                     <th className="text-right py-3 px-3 text-xs font-medium text-white/60 uppercase">Ngày</th>
+                                    <th className="text-center py-3 px-3 text-xs font-medium text-white/60 uppercase">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -341,15 +344,27 @@ export default function BillingPage() {
                                                 ? "bg-blue-500/10 text-blue-400"
                                                 : txn.status === "pending"
                                                     ? "bg-yellow-500/10 text-yellow-400"
-                                                    : "bg-red-500/10 text-red-400"
+                                                    : txn.status === "expired"
+                                                        ? "bg-orange-500/10 text-orange-400"
+                                                        : "bg-red-500/10 text-red-400"
                                                 }`}>
                                                 {txn.status === "completed" || txn.status === "success" || txn.status === "paid" ? "Hoàn thành" :
                                                     txn.status === "pending" ? "Đang xử lý" :
-                                                        txn.status === "failed" ? "Thất bại" : "Đã huỷ"}
+                                                        txn.status === "expired" ? "Hết hạn" :
+                                                            txn.status === "failed" ? "Thất bại" : "Đã huỷ"}
                                             </span>
                                         </td>
                                         <td className="py-3 px-3 text-right text-white/60 text-xs">
                                             {new Date(txn.created_at).toLocaleDateString("vi-VN")}
+                                        </td>
+                                        <td className="py-3 px-3 text-center">
+                                            <button
+                                                onClick={() => setSelectedTxn(txn)}
+                                                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                                            >
+                                                <Eye className="w-3 h-3" />
+                                                Chi tiết
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -358,6 +373,150 @@ export default function BillingPage() {
                     </div>
                 )}
             </div>
+
+            {/* ─── Transaction Detail Modal ─── */}
+            <AnimatePresence>
+                {selectedTxn && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                        onClick={() => setSelectedTxn(null)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Close button */}
+                            <button
+                                onClick={() => setSelectedTxn(null)}
+                                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+
+                            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                <CreditCard className="w-4 h-4 text-blue-500" />
+                                Chi tiết giao dịch
+                            </h3>
+
+                            <div className="space-y-3">
+                                {/* Info rows */}
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Mã giao dịch</p>
+                                        <p className="font-mono text-white/80 text-xs">{selectedTxn.id.slice(0, 8)}...</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Loại</p>
+                                        <p className="text-white font-medium">
+                                            {selectedTxn.type === "deposit" ? "Nạp tiền" :
+                                                selectedTxn.type === "consume" ? "Sử dụng" :
+                                                    selectedTxn.type === "package_purchase" ? "Mua gói" : "Hoàn tiền"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Số tiền</p>
+                                        <p className={`font-bold ${selectedTxn.type === "deposit" || selectedTxn.type === "refund" ? "text-blue-400" : "text-orange-400"}`}>
+                                            {selectedTxn.type === "deposit" || selectedTxn.type === "refund" ? "+" : "-"}
+                                            {Number(selectedTxn.amount_cents).toLocaleString("vi-VN")}
+                                            {selectedTxn.currency === "VND" ? "đ" : " " + (selectedTxn.currency || "USD")}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Trạng thái</p>
+                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${selectedTxn.status === "completed" || selectedTxn.status === "success" || selectedTxn.status === "paid"
+                                                ? "bg-blue-500/10 text-blue-400"
+                                                : selectedTxn.status === "pending"
+                                                    ? "bg-yellow-500/10 text-yellow-400"
+                                                    : selectedTxn.status === "expired"
+                                                        ? "bg-orange-500/10 text-orange-400"
+                                                        : "bg-red-500/10 text-red-400"
+                                            }`}>
+                                            {selectedTxn.status === "completed" || selectedTxn.status === "success" || selectedTxn.status === "paid" ? "Hoàn thành" :
+                                                selectedTxn.status === "pending" ? "Đang xử lý" :
+                                                    selectedTxn.status === "expired" ? "Hết hạn" :
+                                                        selectedTxn.status === "failed" ? "Thất bại" : "Đã huỷ"}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Phương thức</p>
+                                        <p className="text-white/80">{selectedTxn.payment_method || "—"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Ngày tạo</p>
+                                        <p className="text-white/80">{new Date(selectedTxn.created_at).toLocaleString("vi-VN")}</p>
+                                    </div>
+                                </div>
+
+                                {selectedTxn.description && (
+                                    <div>
+                                        <p className="text-xs text-slate-400 mb-0.5">Mô tả</p>
+                                        <p className="text-sm text-white/80">{selectedTxn.description}</p>
+                                    </div>
+                                )}
+
+                                {/* QR Section — only for pending deposit with payment_url */}
+                                {selectedTxn.status === "pending" && selectedTxn.payment_url && (
+                                    <div className="mt-4 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
+                                        <h4 className="text-xs font-semibold text-yellow-400 mb-3 flex items-center gap-1.5">
+                                            <Clock className="w-3.5 h-3.5" />
+                                            Đang chờ thanh toán — Quét mã QR để chuyển khoản
+                                        </h4>
+                                        <div className="flex flex-col sm:flex-row gap-4 items-start">
+                                            <div className="w-[150px] h-[150px] bg-white rounded-xl p-1.5 shadow-lg flex-shrink-0 mx-auto sm:mx-0">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={selectedTxn.payment_url}
+                                                    alt="VietQR payment code"
+                                                    width={135}
+                                                    height={135}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-slate-400">Ngân hàng</p>
+                                                    <p className="text-sm font-semibold text-white">TPBank</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400">Số tài khoản</p>
+                                                    <p className="text-sm font-semibold text-white">01965376001</p>
+                                                </div>
+                                                {selectedTxn.provider_txn_id && (
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs text-slate-400">Nội dung CK</p>
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <code className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg break-all min-w-0">
+                                                                {selectedTxn.provider_txn_id}
+                                                            </code>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(selectedTxn.provider_txn_id || "");
+                                                                    setCopiedContent(true);
+                                                                    setTimeout(() => setCopiedContent(false), 2000);
+                                                                }}
+                                                                className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                                                            >
+                                                                {copiedContent ? <Check className="w-3.5 h-3.5 text-blue-400" /> : <Copy className="w-3.5 h-3.5 text-white/50" />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

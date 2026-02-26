@@ -122,7 +122,7 @@ export default function ActionButtonGroup({
                 <div className="relative">
                     <button
                         onClick={() => setLangOpen(!langOpen)}
-                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-l-lg text-sm font-medium
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-l-lg text-sm font-medium
               border-y border-l transition-all duration-200
               ${onTranslate
                                 ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/15"
@@ -130,9 +130,9 @@ export default function ActionButtonGroup({
                             }`}
                         disabled={!onTranslate}
                     >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span className="text-xs">{selectedLang.flag}</span>
-                        <span className="hidden sm:inline text-xs">{selectedLang.label}</span>
+                        <Globe className="w-4 h-4" />
+                        <span>{selectedLang.flag}</span>
+                        <span className="hidden sm:inline">{selectedLang.label}</span>
                         <ChevronDown
                             className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`}
                         />

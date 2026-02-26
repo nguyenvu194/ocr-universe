@@ -102,6 +102,7 @@ export default function ResultEditor({
         // Don't auto-switch, let user navigate
     }
 
+
     return (
         <div className="h-full flex flex-col rounded-xl border border-white/8 bg-[#0a0f1e] overflow-hidden">
             {/* Tab bar + stats */}
@@ -151,13 +152,7 @@ export default function ResultEditor({
                         </div>
                     )}
 
-                    {/* Translation badge */}
-                    {hasTranslation && (
-                        <div className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-cyan-500/10 text-cyan-400">
-                            <Languages className="w-3 h-3" />
-                            {LANG_LABELS[translationTargetLang || ""] || translationTargetLang}
-                        </div>
-                    )}
+
 
                     {/* Stats badges */}
                     {confidence !== null && (

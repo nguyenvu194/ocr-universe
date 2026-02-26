@@ -248,7 +248,7 @@ export default function DepositPage() {
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -16 }}
-                                className="rounded-2xl border border-white/10 bg-bg-card/80 backdrop-blur-xl p-6 shadow-lg mb-6"
+                                className="rounded-2xl border border-white/10 bg-bg-card/80 backdrop-blur-xl p-6 shadow-lg mb-6 overflow-hidden"
                             >
                                 {isPaid ? (
                                     /* ── Thanh toán thành công ── */
@@ -292,7 +292,7 @@ export default function DepositPage() {
                                             </div>
 
                                             {/* Transfer Info */}
-                                            <div className="flex-1 space-y-3">
+                                            <div className="flex-1 min-w-0 space-y-3">
                                                 <div>
                                                     <p className="text-xs text-slate-400 mb-0.5">Ngân hàng</p>
                                                     <p className="text-sm font-semibold text-white">{sepayData.bankName}</p>
@@ -305,15 +305,15 @@ export default function DepositPage() {
                                                     <p className="text-xs text-slate-400 mb-0.5">Số tiền</p>
                                                     <p className="text-lg font-bold text-yellow-400">{formatVND(sepayData.amountVND)}</p>
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0 overflow-hidden">
                                                     <p className="text-xs text-slate-400 mb-0.5">Nội dung chuyển khoản</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <code className="text-sm font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <code className="text-sm font-bold text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg break-all min-w-0">
                                                             {sepayData.content}
                                                         </code>
                                                         <button
                                                             onClick={() => copyToClipboard(sepayData.content)}
-                                                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                                                            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0"
                                                             title="Copy nội dung"
                                                         >
                                                             {copied ? (

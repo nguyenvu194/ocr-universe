@@ -157,9 +157,13 @@ export interface Transaction {
     id: string;
     type: "deposit" | "package_purchase" | "consume" | "refund";
     amount_cents: number;
-    status: "pending" | "completed" | "success" | "paid" | "failed" | "cancelled";
+    status: "pending" | "completed" | "success" | "paid" | "failed" | "cancelled" | "expired";
     description: string | null;
     payment_method: string | null;
+    payment_url: string | null;
+    provider_txn_id: string | null;
+    provider: string | null;
+    currency: string | null;
     created_at: string;
 }
 

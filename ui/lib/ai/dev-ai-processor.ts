@@ -106,20 +106,41 @@ export class DevAIProcessor implements IAIProcessor {
     }
 
     // ═══════════════════════════════════════════════════
-    // TRANSLATE — DEV mode (no LLM, return placeholder)
+    // TRANSLATE — DEV mode (free Google Translate API)
     // ═══════════════════════════════════════════════════
 
     async translate(text: string, targetLanguage: string): Promise<TranslationResult> {
         const startTime = Date.now();
-        const hasVietnamese = /[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(text);
-        const sourceLanguage = hasVietnamese ? "vi" : "en";
 
-        return {
-            translatedText: `[DEV MODE — Cần OPENAI_API_KEY để dịch]\n\n--- Original (${sourceLanguage}) → ${targetLanguage} ---\n\n${text}`,
-            sourceLanguage,
-            targetLanguage,
-            processingTimeMs: Date.now() - startTime,
-        };
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLanguage)}&dt=t&q=${encodeURIComponent(text)}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Google Translate HTTP ${res.status}`);
+            const data = await res.json();
+
+            // data[0] = array of [translatedSegment, originalSegment, ...]
+            // data[2] = detected source language
+            const translatedText = (data[0] as Array<[string]>)
+                .map((seg: [string]) => seg[0])
+                .join("");
+            const sourceLanguage = (data[2] as string) || "auto";
+
+            return {
+                translatedText,
+                sourceLanguage,
+                targetLanguage,
+                processingTimeMs: Date.now() - startTime,
+            };
+        } catch (err) {
+            console.error("[DevAI] Google Translate failed:", err);
+            // Fallback: return original text with error note
+            return {
+                translatedText: text,
+                sourceLanguage: "auto",
+                targetLanguage,
+                processingTimeMs: Date.now() - startTime,
+            };
+        }
     }
 
     getProcessorName(): string {
