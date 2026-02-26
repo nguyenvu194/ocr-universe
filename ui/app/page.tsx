@@ -1,9 +1,13 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import UploadZone from "@/components/UploadZone";
 import ResultPanel from "@/components/ResultPanel";
 import ToolCard from "@/components/ToolCard";
+import AuthGuardModal from "@/components/AuthGuardModal";
 import { useOCR } from "@/hooks/useOCR";
+import { useAuth } from "@/contexts/auth.context";
+import { ScanSearch } from "lucide-react";
 
 const TOOLS = [
   {
@@ -56,7 +60,31 @@ const STATS = [
 ];
 
 export default function Home() {
-  const { isProcessing, progress, result, error, recognize } = useOCR();
+  const { isProcessing, progress, result, error, recognize, reset } = useOCR();
+  const { user, loading } = useAuth();
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Upload only stores the file — does NOT trigger OCR
+  const handleFileSelect = useCallback((file: File) => {
+    setPendingFile(file);
+    reset(); // clear any previous result/error
+  }, [reset]);
+
+  // Scan button: check auth → OCR or popup
+  const handleScan = useCallback(() => {
+    if (!pendingFile) return;
+    if (!loading && !user) {
+      setShowLoginPopup(true);
+      return;
+    }
+    recognize(pendingFile);
+  }, [pendingFile, user, loading, recognize]);
+
+  const handleCloseLoginPopup = useCallback(() => {
+    setShowLoginPopup(false);
+    // keep the image — user can login and retry
+  }, []);
 
   return (
     <div className="grid-bg">
@@ -90,9 +118,20 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: upload zone */}
+          {/* Right: upload zone + scan button */}
           <div className="animate-fade-in-right">
-            <UploadZone onFileSelect={recognize} isProcessing={isProcessing} progress={progress} />
+            <UploadZone onFileSelect={handleFileSelect} isProcessing={isProcessing} progress={progress} />
+
+            {/* Scan button — appears after file is uploaded */}
+            {pendingFile && !isProcessing && !result && (
+              <button
+                onClick={handleScan}
+                className="mt-4 w-full flex items-center justify-center gap-2.5 py-3 rounded-xl bg-gradient-to-r from-accent to-accent-2 text-white font-semibold text-sm shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              >
+                <ScanSearch className="w-5 h-5" />
+                Quét văn bản
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -119,7 +158,7 @@ export default function Home() {
 
       {/* ─── How it works ───────────────────────────────── */}
       <section className="border-t border-border bg-bg-secondary py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           <h2 className="text-center text-2xl font-bold text-text-primary mb-10 animate-fade-in-up">
             Cách hoạt động
           </h2>
@@ -152,6 +191,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── Auth Guard Modal ─── */}
+      <AuthGuardModal open={showLoginPopup} onClose={handleCloseLoginPopup} />
     </div>
   );
 }

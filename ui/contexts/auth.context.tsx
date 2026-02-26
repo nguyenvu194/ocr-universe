@@ -32,9 +32,9 @@ import {
 interface AuthContextType {
     user: UserProfile | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, redirectTo?: string | null) => Promise<void>;
     register: (email: string, password: string, displayName?: string) => Promise<void>;
-    googleLogin: (idToken: string) => Promise<void>;
+    googleLogin: (idToken: string, redirectTo?: string | null) => Promise<void>;
     loginWithToken: (token: string) => Promise<void>;
     refreshUser: () => Promise<void>;
     logout: () => void;
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // ─── Actions ──────────────────────────────────────────
 
     const login = useCallback(
-        async (email: string, password: string) => {
+        async (email: string, password: string, redirectTo?: string | null) => {
             const res = await authApi.login(email, password);
 
             if (!res.success || !res.data) {
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             setToken(res.data.token);
             setUser(res.data.user);
-            router.push("/workspace");
+            if (redirectTo !== null) router.push(redirectTo ?? "/workspace");
         },
         [router]
     );
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const googleLogin = useCallback(
-        async (idToken: string) => {
+        async (idToken: string, redirectTo?: string | null) => {
             const res = await authApi.googleAuth(idToken);
 
             if (!res.success || !res.data) {
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             setToken(res.data.token);
             setUser(res.data.user);
-            router.push("/workspace");
+            if (redirectTo !== null) router.push(redirectTo ?? "/workspace");
         },
         [router]
     );

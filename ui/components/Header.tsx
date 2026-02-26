@@ -44,7 +44,7 @@ export default function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-white/8 bg-bg-card/80 backdrop-blur-xl">
             {/* ─── Desktop Header ─── */}
             <div className="hidden md:block">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-4 items-center h-16">
                         {/* Col 1 (1/4): Logo — left */}
                         <div className="col-span-1 flex justify-start">

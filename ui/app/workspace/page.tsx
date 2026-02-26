@@ -9,10 +9,14 @@ import ActionButtonGroup from "@/components/workspace/ActionButtonGroup";
 import ProcessingStatus from "@/components/workspace/ProcessingStatus";
 import type { ProcessingStage } from "@/components/workspace/ProcessingStatus";
 import ResultEditor from "@/components/workspace/ResultEditor";
+import AuthGuardModal from "@/components/AuthGuardModal";
 import { useOCR } from "@/hooks/useOCR";
+import { useAuth } from "@/contexts/auth.context";
 
 export default function WorkspacePage() {
     const { isProcessing, progress, result, error, recognize, reset } = useOCR();
+    const { user, loading } = useAuth();
+    const [showLoginPopup, setShowLoginPopup] = useState(false);
 
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -58,6 +62,10 @@ export default function WorkspacePage() {
     }, []);
 
     const handleScan = useCallback(() => {
+        if (!loading && !user) {
+            setShowLoginPopup(true);
+            return;
+        }
         if (file) {
             setReconstructedText(null);
             setCorrections([]);
@@ -66,7 +74,7 @@ export default function WorkspacePage() {
             setTranslationTargetLang(null);
             recognize(file);
         }
-    }, [file, recognize]);
+    }, [file, recognize, user, loading]);
 
     const handleClear = useCallback(() => {
         setFile(null);
@@ -350,7 +358,9 @@ export default function WorkspacePage() {
                     <span>OCR Universe v1.0</span>
                 </div>
             </footer>
+
+            {/* ─── Auth Guard Modal ─── */}
+            <AuthGuardModal open={showLoginPopup} onClose={() => setShowLoginPopup(false)} />
         </div>
     );
 }
-
